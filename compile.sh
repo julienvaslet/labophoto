@@ -279,7 +279,7 @@ fi
 
 log "Target: ${target}"
 log "Main File: ${mainFile}"
-log "Binary: $(getBinaryName)"
+log "Binary: " $(echo `getBinaryName` | sed "s|^${basedir}/||")
 log "-----"
 
 startTimestamp=$(date +%s)
@@ -325,15 +325,41 @@ IFS=${OLDIFS}
 # Link
 link
 
+log "-----"
+log "Compilation successful."
+
 endTimestamp=$(date +%s)
 
 elapsedHours=0
 elapsedMinutes=0
 elapsedSeconds=$(expr ${endTimestamp} - ${startTimestamp})
+elapsedTime=""
 
-log "-----"
-log "Compilation successful."
-log "Elapsed time: ${elapsedSeconds} s"
+while [ ${elapsedSeconds} -ge 60 ]
+do
+	elapsedMinutes=$(expr ${elapsedMinutes} + 1)
+	elapsedSeconds=$(expr ${elapsedSeconds} - 60)
+done
+
+while [ ${elapsedMinutes} -ge 60 ]
+do
+	elapsedHours=$(expr ${elapsedHours} + 1)
+	elapsedMinutes=$(expr ${elapsedMinutes} - 60)
+done
+
+if [ ${elapsedHours} -gt 0 ]
+then
+	elapsedTime="${elapsedTime}${elapsedHours} h "
+fi
+
+if [ ${elapsedHours} -gt 0 -o ${elapsedMinutes} -gt 0 ]
+then
+	elapsedTime="${elapsedTime}${elapsedMinutes} mn "
+fi
+
+elapsedTime="${elapsedTime}${elapsedSeconds} s"
+
+log "Elapsed time: ${elapsedTime}"
 
 # Run (if asked for)
 run
