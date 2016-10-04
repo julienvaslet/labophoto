@@ -1,10 +1,14 @@
 applicationsDirectory := apps
 binariesDirectory := bin
 librariesDirectory := lib
+for :=
 
-#applications := $(shell ls -1 $(applicationsDirectory)/* | xargs -n1 ./compile.sh -e | sed 's|^$(PWD)/||')
 applications := $(shell cd $(applicationsDirectory) && ls -1 *.cpp | sed 's|\.cpp$$||')
 options :=
+
+ifneq ($(for),)
+	options :=-t $(for)
+endif
 
 all: $(applications)
 
