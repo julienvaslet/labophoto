@@ -7,7 +7,7 @@ applications := $(shell cd $(applicationsDirectory) && ls -1 *.cpp | sed 's|\.cp
 options :=
 
 ifneq ($(for),)
-	options :=-t $(for)
+	options := $(options) -t $(for)
 endif
 
 all: $(applications)

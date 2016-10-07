@@ -12,16 +12,6 @@ declare -a iDirectories
 declare -a sDirectories
 declare -a objects
 
-if [ ! -e "${basedir}/targets/base.conf" ]
-then
-	error "File \"${basedir}/targets/base.conf\" does not exists. Exiting."
-	exit 2
-fi
-
-source "${basedir}/targets/base.conf"
-target=""
-targetConfiguration="${defaultTarget}"
-
 function debug ()
 {
 	if [ ${verbose} -eq 1 ]
@@ -215,6 +205,17 @@ function run ()
 	fi
 }
 
+# Initialization
+if [ ! -e "${basedir}/targets/base.conf" ]
+then
+	error "File \"${basedir}/targets/base.conf\" does not exists. Exiting."
+	exit 2
+fi
+
+source "${basedir}/targets/base.conf"
+target=""
+targetConfiguration="${defaultTarget}"
+
 # Parsing options
 justPrintExecutableName=0
 
@@ -281,6 +282,26 @@ log "Target: ${target}"
 log "Main File: ${mainFile}"
 log "Binary: " $(echo `getBinaryName` | sed "s|^${basedir}/||")
 log "-----"
+
+if [ "$(which git &>/dev/null ; echo $?)" = "0" ]
+then
+	projectBranch="$(git status 2>&1 | head -n1 | sed 's|^On branch ||g' | sed '/^fatal:/d')"
+	libraryBranch="$(cd ${externalSourceDirectory} ; git status 2>&1 | head -n1 | sed 's|^On branch ||g' | sed '/^fatal:/d')"
+	
+	if [ -z "${projectBranch}" ]
+	then
+		projectBranch="<Not a git repository>"
+	fi
+	
+	if [ -z "${libraryBranch}" ]
+	then
+		libraryBranch="<Not a git repository>"
+	fi
+	
+	log "Project branch: ${projectBranch}"
+	log "Library branch: ${libraryBranch}"
+	log "-----"
+fi
 
 startTimestamp=$(date +%s)
 
