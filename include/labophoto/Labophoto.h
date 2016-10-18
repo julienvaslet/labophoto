@@ -3,8 +3,10 @@
 
 #define CONTROL_PANEL_WIDTH			310.0f
 #define WORKSPACE_BACKGROUND_COLOR	"444444"
-#define WINDOW_BACKGROUND_COLOR		"888888"
+#define UI_BACKGROUND_COLOR			"888888"
 #define UI_ELEMENT_BACKGROUND_COLOR	"668b8b"
+#define WORKSPACE_Z_INDEX			0.0f
+#define UI_Z_INDEX					0.8f
 
 #include <SDL2/SDL.h>
 #include <opengl/ColoredRectangle.h>
@@ -27,7 +29,7 @@ namespace labophoto
 			GphotoCamera * camera;
 			UserInterface * ui;
 			Negative * image;
-			ColoredRectangle * background;
+			ColoredRectangle * uiBackground;
 			CropTool * cropTool;
 			
 			void loadModeSelectionUI();

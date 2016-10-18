@@ -81,10 +81,14 @@ namespace labophoto
 			Rectangle::prepareRendering( vertices, indices );
 			
 			Matrix transformation = Matrix::identity();
-			Matrix rotate = Matrix::rotationZ( this->rotation );
 
 			if( cropped )
 			{
+				// TODO: Should be handled by the Texture class
+				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER );
+				glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER );
+
+				Matrix rotate = Matrix::rotationZ( -this->rotation );
 				Matrix moveToCenter = Matrix::translation( texture->getWidth() / 2.0f, texture->getHeight() / 2.0f, 0.0f );
 				Matrix moveBack = Matrix::translation( texture->getWidth() / -2.0f, texture->getHeight() / -2.0f, 0.0f );
 				
@@ -92,10 +96,10 @@ namespace labophoto
 				transformation.multiply( rotate );
 				transformation.multiply( moveBack );
 				
-				Vector positionUpLeft( this->view.getOrigin().getX(), this->view.getOrigin().getY(), this->view.getOrigin().getZ() );
-				Vector positionUpRight( this->view.getOrigin().getX() + static_cast<float>( this->view.getWidth() ), this->view.getOrigin().getY(), this->view.getOrigin().getZ() );
-				Vector positionBottomRight( this->view.getOrigin().getX() + static_cast<float>( this->view.getWidth() ), this->view.getOrigin().getY() + static_cast<float>( this->view.getHeight() ), this->view.getOrigin().getZ() );
-				Vector positionBottomLeft( this->view.getOrigin().getX(), this->view.getOrigin().getY() + static_cast<float>( this->view.getHeight() ), this->view.getOrigin().getZ() );
+				Vector positionUpLeft( this->view.getOrigin().getX(), this->view.getOrigin().getY(), 0.0f );
+				Vector positionUpRight( this->view.getOrigin().getX() + static_cast<float>( this->view.getWidth() ), this->view.getOrigin().getY(), 0.0f );
+				Vector positionBottomRight( this->view.getOrigin().getX() + static_cast<float>( this->view.getWidth() ), this->view.getOrigin().getY() + static_cast<float>( this->view.getHeight() ), 0.0f );
+				Vector positionBottomLeft( this->view.getOrigin().getX(), this->view.getOrigin().getY() + static_cast<float>( this->view.getHeight() ), 0.0f );
 			
 				positionUpLeft *= transformation;
 				positionUpRight *= transformation;

@@ -21,7 +21,7 @@ namespace labophoto
 {
 	Labophoto * Labophoto::instance = NULL;
 	
-	Labophoto::Labophoto() : camera(NULL), ui(NULL), image(NULL), background(NULL), cropTool(NULL)
+	Labophoto::Labophoto() : camera(NULL), ui(NULL), image(NULL), uiBackground(NULL), cropTool(NULL)
 	{
 		if( Labophoto::instance != NULL )
 		{
@@ -33,14 +33,14 @@ namespace labophoto
 		
 		Screen::get()->setTitle( "Labophoto" );
 
-		Color backgroundColor( WINDOW_BACKGROUND_COLOR );
+		Color backgroundColor( WORKSPACE_BACKGROUND_COLOR );
 		Screen::get()->setClearColor( backgroundColor );
 		
 		this->image = new Negative();
 		this->cropTool = new CropTool( this->image );
 		
-		Color workspaceColor( WORKSPACE_BACKGROUND_COLOR );
-		this->background = new ColoredRectangle( 1, 1, workspaceColor );
+		Color uiBackgroundColor( UI_BACKGROUND_COLOR );
+		this->uiBackground = new ColoredRectangle( 1, 1, uiBackgroundColor );
 	
 		new ui::BitmapFont( "data/fonts/bitmap.tga", 32, 32, 7, 1 );
 	
@@ -74,10 +74,10 @@ namespace labophoto
 			this->cropTool = NULL;
 		}
 		
-		if( this->background != NULL )
+		if( this->uiBackground != NULL )
 		{
-			delete this->background;
-			this->background = NULL;
+			delete this->uiBackground;
+			this->uiBackground = NULL;
 		}
 		
 		if( this->image != NULL )
@@ -122,47 +122,57 @@ namespace labophoto
 		// Set the orthogonal origin at the top-left corner
 		Matrix::projection = Matrix::ortho( 0, width, height, 0, -1.0f, 1.0f );
 		
-		this->background->getOrigin().moveTo( CONTROL_PANEL_WIDTH, 0.0f, 0.0f );
-		this->background->resize( width - CONTROL_PANEL_WIDTH, height );
+		this->uiBackground->getOrigin().moveTo( 0.0f, 0.0f, WORKSPACE_Z_INDEX + 0.02f );
+		this->uiBackground->resize( CONTROL_PANEL_WIDTH, height );
 		
 		// Resize image to fit workspace
 		Texture2D * texture = this->image->getTile()->getTexture();
 		
 		if( texture != NULL )
 		{
-			// Review ratio computation
-			float imageRatio = static_cast<float>( texture->getWidth() ) / static_cast<float>( texture->getHeight() );
+			float imageRatio = 1.0f;
+			
+			if( this->cropTool->isActive() )
+				imageRatio = static_cast<float>( texture->getWidth() ) / static_cast<float>( texture->getHeight() );
+			else
+				imageRatio = static_cast<float>( this->image->getView().getWidth() ) / static_cast<float>( this->image->getView().getHeight() );
+			
+			unsigned int workspaceWidth = width - CONTROL_PANEL_WIDTH;
+			unsigned int workspaceHeight = height;
 			unsigned int imageWidth = 0;
 			unsigned int imageHeight = 0;
 			
 			if( imageRatio > 1.0f )
 			{
-				imageWidth = this->background->getWidth();
+				imageWidth = workspaceWidth;
 				imageHeight = imageWidth / imageRatio;
 				
-				if( imageHeight > this->background->getHeight() )
+				if( imageHeight > workspaceHeight )
 				{
-					imageHeight = this->background->getHeight();
+					imageHeight = workspaceHeight;
 					imageWidth = imageHeight * imageRatio;
 				}
 			}
 			else
 			{
-				imageHeight = this->background->getHeight();
+				imageHeight = workspaceHeight;
 				imageWidth = imageHeight * imageRatio;
 				
-				if( imageWidth > this->background->getWidth() )
+				if( imageWidth > workspaceWidth )
 				{
-					imageWidth = this->background->getWidth();
+					imageWidth = workspaceWidth;
 					imageHeight = imageWidth / imageRatio;
 				}
 			}
 			
 			this->image->resize( imageWidth, imageHeight );
-			this->image->getOrigin().moveTo( CONTROL_PANEL_WIDTH + ( this->background->getWidth() - imageWidth ) / 2.0f, (this->background->getHeight() - imageHeight ) / 2.0f, 0.5f );
+			this->image->getOrigin().moveTo( CONTROL_PANEL_WIDTH + ( workspaceWidth - imageWidth ) / 2.0f, (workspaceHeight - imageHeight ) / 2.0f, WORKSPACE_Z_INDEX );
 
-			this->cropTool->resize( imageWidth, imageHeight );
-			this->cropTool->getOrigin().moveTo( CONTROL_PANEL_WIDTH + ( this->background->getWidth() - imageWidth ) / 2.0f, (this->background->getHeight() - imageHeight ) / 2.0f, 0.8f );
+			if( this->cropTool->isActive() )
+			{
+				this->cropTool->resize( imageWidth, imageHeight );
+				this->cropTool->getOrigin().moveTo( CONTROL_PANEL_WIDTH + ( workspaceWidth - imageWidth ) / 2.0f, (workspaceHeight - imageHeight ) / 2.0f, WORKSPACE_Z_INDEX + 0.2f );
+			}
 		}
 	}
 	
@@ -208,15 +218,16 @@ namespace labophoto
 		vector<Color> colors;
 		vector<unsigned short int> indices;
 		
-		this->background->prepareRendering( vertices, colors, indices );
+		this->uiBackground->prepareRendering( vertices, colors, indices );
 		ColoredRectangle::render( vertices, colors, indices );
-	
+		
 		this->image->render( !this->cropTool->isActive() );
 		
 		if( cropTool->isActive() )
 			this->cropTool->render();
 		
 		this->ui->render( ticks );
+		
 	}
 	
 	void Labophoto::handleEvent( SDL_Event * event )
@@ -297,7 +308,7 @@ namespace labophoto
 	{
 		ui::DropDownList * currentMode = new ui::DropDownList( "current_mode", "Mode de travail" );
 		currentMode->setBackgroundColor( UI_ELEMENT_BACKGROUND_COLOR );
-		currentMode->moveTo( 5, 5 );
+		currentMode->moveTo( 5, 5, UI_Z_INDEX );
 		currentMode->resize( 300, 20 );
 		
 		currentMode->addItem( "1 - Choix de l'appareil" );
@@ -427,13 +438,13 @@ namespace labophoto
 	{
 		ui::Button * reloadCameraList = new ui::Button( "btn_reload_camera_list", "Recharger la liste" );
 		reloadCameraList->setBackgroundColor( UI_ELEMENT_BACKGROUND_COLOR );
-		reloadCameraList->moveTo( 5, 35 );
+		reloadCameraList->moveTo( 5, 35, UI_Z_INDEX );
 		reloadCameraList->resize( 300, 20 );
 		reloadCameraList->addEventHandler( "mousedown", Labophoto::reloadCameraListEvent );
 		
 		ui::DropDownList * cameraList = new ui::DropDownList( "camera_list", "Liste des appareils" );
 		cameraList->setBackgroundColor( UI_ELEMENT_BACKGROUND_COLOR );
-		cameraList->moveTo( 5, 55 );
+		cameraList->moveTo( 5, 55, UI_Z_INDEX );
 		cameraList->resize( 300, 20 );
 		cameraList->addEventHandler( "selectionchanged", Labophoto::cameraChangedEvent );
 		
@@ -522,69 +533,69 @@ namespace labophoto
 	{
 		ui::Button * takePreview = new ui::Button( "btn_take_preview", "Prendre une photo" );
 		takePreview->setBackgroundColor( UI_ELEMENT_BACKGROUND_COLOR );
-		takePreview->moveTo( 5, 35 );
+		takePreview->moveTo( 5, 35, UI_Z_INDEX );
 		takePreview->resize( 300, 20 );
 		takePreview->addEventHandler( "mouseup", Labophoto::takePreviewEvent );
 		
 		ui::DropDownList * cameraShutterSpeed = new ui::DropDownList( "camera_shutterspeed", "Duree d'ouverture (s)" );
 		cameraShutterSpeed->setBackgroundColor( UI_ELEMENT_BACKGROUND_COLOR );
-		cameraShutterSpeed->moveTo( 5, 60 );
+		cameraShutterSpeed->moveTo( 5, 60, UI_Z_INDEX );
 		cameraShutterSpeed->resize( 300, 20 );
 		cameraShutterSpeed->addEventHandler( "selectionchanged", Labophoto::changeShutterSpeedEvent );
 		
 		ui::DropDownList * cameraAperture = new ui::DropDownList( "camera_aperture", "Ouverture (focale)" );
 		cameraAperture->setBackgroundColor( UI_ELEMENT_BACKGROUND_COLOR );
-		cameraAperture->moveTo( 5, 80 );
+		cameraAperture->moveTo( 5, 80, UI_Z_INDEX );
 		cameraAperture->resize( 300, 20 );
 		cameraAperture->addEventHandler( "selectionchanged", Labophoto::changeApertureEvent );
 		
 		ui::DropDownList * cameraIso = new ui::DropDownList( "camera_iso", "Sensibilite (ISO)" );
 		cameraIso->setBackgroundColor( UI_ELEMENT_BACKGROUND_COLOR );
-		cameraIso->moveTo( 5, 100 );
+		cameraIso->moveTo( 5, 100, UI_Z_INDEX );
 		cameraIso->resize( 300, 20 );
 		cameraIso->addEventHandler( "selectionchanged", Labophoto::changeIsoEvent );
 		
 		ui::DropDownList * cameraWhiteBalance = new ui::DropDownList( "camera_whitebalance", "Balance des blancs" );
 		cameraWhiteBalance->setBackgroundColor( UI_ELEMENT_BACKGROUND_COLOR );
-		cameraWhiteBalance->moveTo( 5, 120 );
+		cameraWhiteBalance->moveTo( 5, 120, UI_Z_INDEX );
 		cameraWhiteBalance->resize( 300, 20 );
 		cameraWhiteBalance->addEventHandler( "selectionchanged", Labophoto::changeWhiteBalanceEvent );
 		
 		ui::PushButton * invertColorsButton = new ui::PushButton( "btn_invert_colors", "Inverser les couleurs" );
 		invertColorsButton->setBackgroundColor( UI_ELEMENT_BACKGROUND_COLOR );
-		invertColorsButton->moveTo( 5, 150 );
+		invertColorsButton->moveTo( 5, 150, UI_Z_INDEX );
 		invertColorsButton->resize( 300, 20 );
 		invertColorsButton->setPushState( this->image->areColorsInverted() );
 		invertColorsButton->addEventHandler( "pushstatechanged", Labophoto::changeColorInversionEvent );
 		
 		ui::PushButton * cropButton = new ui::PushButton( "btn_crop", "Recadrer" );
 		cropButton->setBackgroundColor( UI_ELEMENT_BACKGROUND_COLOR );
-		cropButton->moveTo( 5, 170 );
+		cropButton->moveTo( 5, 170, UI_Z_INDEX );
 		cropButton->resize( 300, 20 );
 		cropButton->addEventHandler( "pushstatechanged", Labophoto::activeCropToolEvent );
 		
 		ui::Label * lblRotation = new ui::Label( "lbl_rotation", "Rotation :" );
-		lblRotation->moveTo( 5, 200 );
+		lblRotation->moveTo( 5, 200, UI_Z_INDEX );
 		lblRotation->resize( 150, 20 );
 		
 		ui::Label * lblRotationValue = new ui::Label( "lbl_rotation_value", "-" );
-		lblRotationValue->moveTo( 150, 200 );
+		lblRotationValue->moveTo( 150, 200, UI_Z_INDEX );
 		lblRotationValue->resize( 150, 20 );
 		
 		ui::Label * lblCropOrigin = new ui::Label( "lbl_crop_origin", "Origine :" );
-		lblCropOrigin->moveTo( 5, 220 );
+		lblCropOrigin->moveTo( 5, 220, UI_Z_INDEX );
 		lblCropOrigin->resize( 150, 20 );
 		
 		ui::Label * lblCropOriginValue = new ui::Label( "lbl_crop_origin_value", "-" );
-		lblCropOriginValue->moveTo( 150, 220 );
+		lblCropOriginValue->moveTo( 150, 220, UI_Z_INDEX );
 		lblCropOriginValue->resize( 150, 20 );
 		
 		ui::Label * lblCropSize = new ui::Label( "lbl_crop_size", "Dimension :" );
-		lblCropSize->moveTo( 5, 240 );
+		lblCropSize->moveTo( 5, 240, UI_Z_INDEX );
 		lblCropSize->resize( 150, 20 );
 		
 		ui::Label * lblCropSizeValue = new ui::Label( "lbl_crop_size_value", "-" );
-		lblCropSizeValue->moveTo( 150, 240 );
+		lblCropSizeValue->moveTo( 150, 240, UI_Z_INDEX );
 		lblCropSizeValue->resize( 150, 20 );
 		
 		this->ui->addElement( takePreview );
@@ -783,6 +794,7 @@ namespace labophoto
 		{
 			labophoto->cropTool->activate( btn->getPushState() );
 			labophoto->synchronizeCropToolLabels();
+			labophoto->resizeView();
 		}
 			
 		return true;

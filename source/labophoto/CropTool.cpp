@@ -241,13 +241,13 @@ namespace labophoto
 					view.getOrigin().setX( 0.0f );
 					
 				else if( view.getX() + view.getWidth() > this->negative->getNegativeWidth() )
-					view.getOrigin().setX( this->negative->getNegativeWidth() - view.getWidth() - 1.0f );
+					view.getOrigin().setX( this->negative->getNegativeWidth() - view.getWidth() );
 					
 				if( view.getY() < 0.0f )
 					view.getOrigin().setY( 0.0f );
 					
 				else if( view.getY() + view.getHeight() > this->negative->getNegativeHeight() )
-					view.getOrigin().setY( this->negative->getNegativeHeight() - view.getHeight() - 1.0f );
+					view.getOrigin().setY( this->negative->getNegativeHeight() - view.getHeight() );
 				
 				break;
 			}
