@@ -7,6 +7,8 @@
 #include <game/Resource.h>
 
 #include <sstream>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 using namespace game;
 using namespace opengl;
@@ -728,7 +730,40 @@ namespace labophoto
 	
 	void Labophoto::exportImage()
 	{
-		this->image->renderToFile( "export.jpg" );
+		string filename;
+		stringstream ss;
+		char currentDate[11];
+		int currentNegative = 0;
+		time_t rawtime;
+		struct tm * timeinfo;
+		struct stat info;
+		
+		time( &rawtime );
+    	timeinfo = localtime( &rawtime );
+    	strftime( currentDate, 11, "%Y-%m-%d", timeinfo );
+		
+		mkdir( "negatives", S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH );
+		ss << "negatives/" << currentDate;
+		mkdir( ss.str().c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH );
+		ss << "/";
+		
+		string path = ss.str();
+		
+		do
+		{
+			ss.str( "" );
+			ss << path;
+			ss << "negative-" << currentNegative << ".jpg";
+			filename = ss.str();
+			currentNegative++;
+		}
+		while( stat( filename.c_str(), &info ) == 0 );
+		
+		#ifdef DEBUG0
+		Logger::get() << "Exporting negative to: " << filename << Logger::endl;
+		#endif
+		
+		this->image->renderToFile( filename );
 	}
 	
 	bool Labophoto::takePreviewEvent( Element * element, const event::Event * event )
