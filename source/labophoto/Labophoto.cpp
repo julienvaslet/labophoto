@@ -291,8 +291,8 @@ namespace labophoto
 	void Labophoto::captureImage()
 	{
 		this->setLoadingAnimation( true );
-		this->camera->capture( "test.jpg" );
-		Resource::loadTexture2D( "labophoto.image", "test.jpg", true );
+		this->camera->capture( "tmp.jpg" );
+		Resource::loadTexture2D( "labophoto.image", "tmp.jpg", true );
 
 		this->image->getTile()->setTexture( "labophoto.image" );
 		Texture2D * texture = static_cast<Texture2D *>( Resource::get( "labophoto.image" ) );
@@ -346,13 +346,15 @@ namespace labophoto
 				
 				case '3':
 				{
-					labophoto->setMode( 2 );
+					//labophoto->setMode( 2 );
+					labophoto->setMode( 1 );
 					break;
 				}
 				
 				case '4':
 				{
-					labophoto->setMode( 3 );
+					//labophoto->setMode( 3 );
+					labophoto->setMode( 1 );
 					break;
 				}
 				
@@ -381,6 +383,7 @@ namespace labophoto
 		this->ui->hideElement( "camera_whitebalance" );
 		this->ui->hideElement( "btn_invert_colors" );
 		this->ui->hideElement( "btn_crop" );
+		this->ui->hideElement( "btn_export" );
 		this->ui->hideElement( "lbl_rotation" );
 		this->ui->hideElement( "lbl_rotation_value" );
 		this->ui->hideElement( "lbl_crop_origin" );
@@ -406,6 +409,7 @@ namespace labophoto
 				this->ui->showElement( "camera_whitebalance" );
 				this->ui->showElement( "btn_invert_colors" );
 				this->ui->showElement( "btn_crop" );
+				this->ui->showElement( "btn_export" );
 				this->ui->showElement( "lbl_rotation" );
 				this->ui->showElement( "lbl_rotation_value" );
 				this->ui->showElement( "lbl_crop_origin" );
@@ -598,6 +602,12 @@ namespace labophoto
 		lblCropSizeValue->moveTo( 150, 240, UI_Z_INDEX );
 		lblCropSizeValue->resize( 150, 20 );
 		
+		ui::Button * exportButton = new ui::Button( "btn_export", "Exporter" );
+		exportButton->setBackgroundColor( UI_ELEMENT_BACKGROUND_COLOR );
+		exportButton->moveTo( 5, 270, UI_Z_INDEX );
+		exportButton->resize( 300, 20 );
+		exportButton->addEventHandler( "mouseup", Labophoto::exportCurrentImage );
+		
 		this->ui->addElement( takePreview );
 		this->ui->addElement( cameraIso );
 		this->ui->addElement( cameraAperture );
@@ -611,6 +621,7 @@ namespace labophoto
 		this->ui->addElement( lblCropOriginValue );
 		this->ui->addElement( lblCropSize );
 		this->ui->addElement( lblCropSizeValue );
+		this->ui->addElement( exportButton );
 	}
 	
 	void Labophoto::reloadCameraConfiguration()
@@ -715,6 +726,11 @@ namespace labophoto
 		}
 	}
 	
+	void Labophoto::exportImage()
+	{
+		this->image->renderToFile( "export.jpg" );
+	}
+	
 	bool Labophoto::takePreviewEvent( Element * element, const event::Event * event )
 	{
 		Labophoto * labophoto = Labophoto::get();
@@ -797,6 +813,16 @@ namespace labophoto
 			labophoto->resizeView();
 		}
 			
+		return true;
+	}
+	
+	bool Labophoto::exportCurrentImage( Element * element, const event::Event * event )
+	{
+		Labophoto * labophoto = Labophoto::get();
+		
+		if( labophoto != NULL )
+			labophoto->exportImage();
+		
 		return true;
 	}
 }

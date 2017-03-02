@@ -37,6 +37,7 @@ namespace labophoto
 			void setView( unsigned int x, unsigned int y, unsigned int width, unsigned int height );
 			
 			void render( bool cropped = true );
+			void renderToFile( const string& filename );
 	};
 }
 

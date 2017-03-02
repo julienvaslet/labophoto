@@ -60,6 +60,7 @@ namespace labophoto
 			
 			void resizeView();
 			void loadNegative( const string& path );
+			void exportImage();
 			
 			static Labophoto * get();
 			
@@ -73,6 +74,7 @@ namespace labophoto
 			static bool changeWhiteBalanceEvent( Element * element, const event::Event * event );
 			static bool changeColorInversionEvent( Element * element, const event::Event * event );
 			static bool activeCropToolEvent( Element * element, const event::Event * event );
+			static bool exportCurrentImage( Element * element, const event::Event * event );
 	};
 }
 
